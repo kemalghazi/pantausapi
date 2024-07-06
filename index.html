@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pemantauan Kawanan Sapi</title>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" 
+    integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    
+    <style>
+        #map {height: 500px;}
+        /* Custom CSS for the title */
+        .page-title {
+            text-align: center;
+            font-size: 2rem; /* Ukuran huruf yang lebih sesuai */
+            margin-top: 20px;
+            padding: 10px 20px; /* Padding untuk meningkatkan keterbacaan */
+            background-color: #007bff; /* Warna latar belakang */
+            color: white; /* Warna teks */
+            border-radius: 10px; /* Bentuk sudut yang dibulatkan */
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid mt-4">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <h1 class="page-title">Pemantauan Kawanan Sapi</h1>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container-fluid mt-4">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div id="map"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" 
+    integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" 
+    crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.min.js" 
+    integrity="sha384-BBtl+eGJRgqQAUMxJ7pMwbEyER4l1g+O15P+16Ep7Q9Q+zqX6gSbd85u4mG4QzX+" 
+    crossorigin="anonymous"></script>
+    
+    <!-- Custom JavaScript -->
+    <script>
+        var map = L.map('map').setView([0, 0], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        var userMarker;
+        var routeLayer;
+
+        // Function to fetch data from the API
+        function fetchData() {
+            // Replace 'YOUR_API_ENDPOINT' with the actual API endpoint
+            var apiUrl = 'https://api.thingspeak.com/channels/2544260/feeds/last.json?timezone=Asia%2FJakarta&api_key=V1K4467A0YCWJHVR';
+
+            // Fetch data from the API
+            fetch(apiUrl)
+            .then(response => response.json())
+            .then(data => {
+                // Update the map with the new data
+                console.log('Response JSON:', data);
+                updateMarker(data);
+            });
+        }
+
+        // Function to fetch address from coordinates
+        function fetchAddress(latitude, longitude) {
+            var apiUrl = 'https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=' + latitude + '&lon=' + longitude;
+
+            return fetch(apiUrl)
+            .then(response => response.json())
+            .then(data => {
+                return data.display_name;
+            })
+            .catch(error => {
+                console.error('Error fetching address:', error);
+                return 'Alamat tidak tersedia';
+            });
+        }
+
+        // Function to get user's current location
+        function getUserLocation() {
+            return new Promise((resolve, reject) => {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(position => {
+                        resolve([position.coords.latitude, position.coords.longitude]);
+                    }, () => {
+                        reject('Geolocation not supported or permission denied');
+                    });
+                } else {
+                    reject('Geolocation not supported or permission denied');
+                }
+            });
+        }
+
+        // Function to update markers on the map
+        function updateMarker(location) {
+            var latLng = [parseFloat(location.field1), parseFloat(location.field2)];
+            var field3 = location.field3;
+            var createdAt = new Date(location.created_at); // Get the created_at field from the data
+
+            // Function to format the time and add timezone
+            function formatTime(date, timezone) {
+                return new Intl.DateTimeFormat('id-ID', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    timeZone: timezone
+                }).format(date);
+            }
+
+            var timeWIB = formatTime(createdAt, 'Asia/Jakarta') + ' WIB';
+            var timeWITA = formatTime(createdAt, 'Asia/Makassar') + ' WITA';
+            var timeWIT = formatTime(createdAt, 'Asia/Jayapura') + ' WIT';
+
+            map.eachLayer(function (layer) {
+                if (layer instanceof L.Marker) {
+                    map.removeLayer(layer);
+                }
+            });
+
+            // Fetch address based on coordinates
+            fetchAddress(latLng[0], latLng[1])
+            .then(address => {
+                var marker = L.marker(latLng).addTo(map).bindPopup(
+                    'Pukul: ' + timeWIB + '<br>' +
+                    'Alamat: ' + address + '<br>' +
+                    'Jumlah Sapi terdeteksi: ' + field3 + '<br>' +
+                    '<button onclick="getRoute()">Dapatkan Rute</button>'
+                );
+                map.setView(latLng, map.getZoom());
+            })
+            .catch(error => {
+                console.error('Error fetching address:', error);
+            });
+        }
+
+        // Function to get route from user's location to the herd location
+        function getRoute() {
+            getUserLocation()
+            .then(userLocation => {
+                var apiUrl = 'https://api.thingspeak.com/channels/2544260/feeds/last.json?timezone=Asia%2FJakarta&api_key=V1K4467A0YCWJHVR';
+                return fetch(apiUrl)
+                .then(response => response.json())
+                .then(data => {
+                    var herdLocation = [parseFloat(data.field1), parseFloat(data.field2)];
+                    return [userLocation, herdLocation];
+                });
+            })
+            .then(locations => {
+                var userLocation = locations[0];
+                var herdLocation = locations[1];
+
+                // Request route from OSRM API
+                var osrmApiUrl = `https://router.project-osrm.org/route/v1/driving/${userLocation[1]},${userLocation[0]};${herdLocation[1]},${herdLocation[0]}?overview=full&geometries=geojson`;
+
+                return fetch(osrmApiUrl)
+                .then(response => response.json())
+                .then(data => {
+                    var route = data.routes[0].geometry;
+                    return route;
+                });
+            })
+            .then(route => {
+                if (routeLayer) {
+                    map.removeLayer(routeLayer);
+                }
+                routeLayer = L.geoJSON(route, {
+                    style: {
+                        color: 'blue',
+                        weight: 4,
+                        opacity: 0.7
+                    }
+                }).addTo(map);
+                map.fitBounds(routeLayer.getBounds());
+            })
+            .catch(error => {
+                console.error('Error getting route:', error);
+            });
+        }
+
+        // Initial fetch when the page loads
+        fetchData();
+
+        // Fetch data every 20 seconds (adjust the interval as needed)
+        setInterval(fetchData, 20000);
+    </script>
+  
+</body>
+</html>
