@@ -140,12 +140,17 @@
             // Fetch address based on coordinates
             fetchAddress(latLng[0], latLng[1])
             .then(address => {
-                var marker = L.marker(latLng).addTo(map).bindPopup(
-                    'Pukul: ' + timeWIB + '<br>' +
-                    'Alamat: ' + address + '<br>' +
-                    'Jumlah Sapi terdeteksi: ' + field3 + '<br>' +
-                    '<button onclick="getRoute()">Dapatkan Rute</button>'
-                );
+                var popupContent = 
+                    '<div>' +
+                        '<p>Pukul: ' + timeWIB + '</p>' +
+                        '<p>Alamat: ' + address + '</p>' +
+                        '<p>Jumlah Sapi terdeteksi: ' + field3 + '</p>' +
+                        '<button class="btn btn-primary" onclick="getRoute()">Dapatkan Rute</button>' +
+                    '</div>';
+
+                var marker = L.marker(latLng).addTo(map).bindPopup(popupContent, {
+                    maxWidth: 'auto'
+                });
                 map.setView(latLng, map.getZoom());
             })
             .catch(error => {
