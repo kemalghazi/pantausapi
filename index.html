@@ -12,6 +12,9 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" 
     integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
     
+    <!-- Leaflet RotatedMarker CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet-rotatedmarker/0.6.1/leaflet.rotatedMarker.min.css" />
+    
     <style>
         #map { height: 500px; }
         /* Custom CSS for the title */
@@ -68,6 +71,10 @@
 
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    
+    <!-- Leaflet RotatedMarker JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-rotatedmarker/0.6.1/leaflet.rotatedMarker.min.js"></script>
+    
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" 
     integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" 
@@ -78,25 +85,13 @@
     
     <!-- Custom JavaScript -->
     <script>
-        var map = L.map('map', {
-            center: [0, 0],
-            zoom: 15,
-            zoomControl: false // Menonaktifkan kontrol zoom bawaan Leaflet
-        });
-
+        var map = L.map('map').setView([0, 0], 15);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors'
         }).addTo(map);
 
-        // Tambahkan kontrol zoom
-        L.control.zoom({
-            position: 'topright'
-        }).addTo(map);
-
-        // Tambahkan kontrol pan
-        L.control.pan({
-            position: 'topright'
-        }).addTo(map);
+        var userMarker;
+        var routeLayer;
 
         // Function to fetch data from the API
         function fetchData() {
@@ -180,9 +175,10 @@
         // Function to update markers on the map
         function updateMarker(location) {
             var latLng = [parseFloat(location.field1), parseFloat(location.field2)];
+            var orientation = parseFloat(location.field4); // Assuming field4 contains orientation in degrees
             
             map.eachLayer(function (layer) {
-                if (layer instanceof L.Marker) {
+                if (layer instanceof L.Marker || layer instanceof L.RotatedMarker) {
                     map.removeLayer(layer);
                 }
             });
