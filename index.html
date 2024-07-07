@@ -26,24 +26,21 @@
         }
 
         @media (max-width: 576px) {
-            #map { height: 300px; } /* Adjust map height for smaller screens */
+            #map { height: 300px; } /* Sesuaikan tinggi peta untuk layar yang lebih kecil */
             .page-title {
-                font-size: 1.5rem; /* Smaller font size for the title */
-                padding: 5px 10px; /* Less padding for better fit on smaller screens */
+                font-size: 1.5rem; /* Ukuran huruf yang lebih kecil untuk judul */
+                padding: 5px 10px; /* Padding lebih sedikit untuk penyesuaian yang lebih baik pada layar yang lebih kecil */
             }
         }
 
         .info-container {
             position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
+            bottom: 0;
+            left: 0;
+            width: 100%;
             background-color: white;
             padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            max-width: 90%;
+            border-top: 1px solid #ddd;
             text-align: center;
         }
     </style>
