@@ -24,12 +24,20 @@
             color: white; /* Warna teks */
             border-radius: 10px; /* Bentuk sudut yang dibulatkan */
         }
+
+        @media (max-width: 576px) {
+            #map { height: 300px; } /* Adjust map height for smaller screens */
+            .page-title {
+                font-size: 1.5rem; /* Smaller font size for the title */
+                padding: 5px 10px; /* Less padding for better fit on smaller screens */
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container-fluid mt-4">
         <div class="row justify-content-center">
-            <div class="col-lg-8">
+            <div class="col-12 col-md-8">
                 <h1 class="page-title">Pemantauan Kawanan Sapi</h1>
             </div>
         </div>
@@ -38,7 +46,7 @@
     <!-- Main Content -->
     <div class="container-fluid mt-4">
         <div class="row justify-content-center">
-            <div class="col-lg-8">
+            <div class="col-12 col-md-8">
                 <div id="map"></div>
             </div>
         </div>
@@ -66,14 +74,10 @@
 
         // Function to fetch data from the API
         function fetchData() {
-            // Replace 'YOUR_API_ENDPOINT' with the actual API endpoint
             var apiUrl = 'https://api.thingspeak.com/channels/2544260/feeds/last.json?timezone=Asia%2FJakarta&api_key=V1K4467A0YCWJHVR';
-
-            // Fetch data from the API
             fetch(apiUrl)
             .then(response => response.json())
             .then(data => {
-                // Update the map with the new data
                 console.log('Response JSON:', data);
                 updateMarker(data);
             });
@@ -82,7 +86,6 @@
         // Function to fetch address from coordinates
         function fetchAddress(latitude, longitude) {
             var apiUrl = 'https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=' + latitude + '&lon=' + longitude;
-
             return fetch(apiUrl)
             .then(response => response.json())
             .then(data => {
@@ -113,7 +116,7 @@
         function updateMarker(location) {
             var latLng = [parseFloat(location.field1), parseFloat(location.field2)];
             var field3 = location.field3;
-            var createdAt = new Date(location.created_at); // Get the created_at field from the data
+            var createdAt = new Date(location.created_at);
 
             // Function to format the time and add timezone
             function formatTime(date, timezone) {
@@ -165,8 +168,6 @@
             .then(locations => {
                 var userLocation = locations[0];
                 var herdLocation = locations[1];
-
-                // Request route from OSRM API
                 var osrmApiUrl = `https://router.project-osrm.org/route/v1/driving/${userLocation[1]},${userLocation[0]};${herdLocation[1]},${herdLocation[0]}?overview=full&geometries=geojson`;
 
                 return fetch(osrmApiUrl)
@@ -200,6 +201,5 @@
         // Fetch data every 20 seconds (adjust the interval as needed)
         setInterval(fetchData, 20000);
     </script>
-  
 </body>
 </html>
