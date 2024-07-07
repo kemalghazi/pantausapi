@@ -13,7 +13,7 @@
     integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
     
     <style>
-        #map {height: 500px;}
+        #map { height: 500px; }
         /* Custom CSS for the title */
         .page-title {
             text-align: center;
@@ -32,6 +32,20 @@
                 padding: 5px 10px; /* Less padding for better fit on smaller screens */
             }
         }
+
+        .info-container {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: white;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            max-width: 90%;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -48,6 +62,9 @@
         <div class="row justify-content-center">
             <div class="col-12 col-md-8">
                 <div id="map"></div>
+                <div class="info-container" id="infoContainer">
+                    <!-- Informasi akan diperbarui dinamis di sini -->
+                </div>
             </div>
         </div>
     </div>
@@ -112,11 +129,11 @@
             });
         }
 
-        // Function to update markers on the map
-        function updateMarker(location) {
-            var latLng = [parseFloat(location.field1), parseFloat(location.field2)];
-            var field3 = location.field3;
-            var createdAt = new Date(location.created_at);
+        // Function to update information container below the map
+        function updateInfoContainer(data) {
+            var latLng = [parseFloat(data.field1), parseFloat(data.field2)];
+            var field3 = data.field3;
+            var createdAt = new Date(data.created_at);
 
             // Function to format the time and add timezone
             function formatTime(date, timezone) {
@@ -131,31 +148,41 @@
             var timeWITA = formatTime(createdAt, 'Asia/Makassar') + ' WITA';
             var timeWIT = formatTime(createdAt, 'Asia/Jayapura') + ' WIT';
 
+            var infoContainer = document.getElementById('infoContainer');
+            infoContainer.innerHTML = 
+                '<p>Pukul: ' + timeWIB + '</p>' +
+                '<p>Alamat: <span id="address"></span></p>' +
+                '<p>Jumlah Sapi terdeteksi: ' + field3 + '</p>' +
+                '<button class="btn btn-primary" onclick="getRoute()">Dapatkan Rute</button>';
+
+            // Fetch address based on coordinates and update the address span
+            fetchAddress(latLng[0], latLng[1])
+            .then(address => {
+                var addressSpan = document.getElementById('address');
+                addressSpan.textContent = address;
+            })
+            .catch(error => {
+                console.error('Error fetching address:', error);
+                var addressSpan = document.getElementById('address');
+                addressSpan.textContent = 'Alamat tidak tersedia';
+            });
+        }
+
+        // Function to update markers on the map
+        function updateMarker(location) {
+            var latLng = [parseFloat(location.field1), parseFloat(location.field2)];
+            
             map.eachLayer(function (layer) {
                 if (layer instanceof L.Marker) {
                     map.removeLayer(layer);
                 }
             });
 
-            // Fetch address based on coordinates
-            fetchAddress(latLng[0], latLng[1])
-            .then(address => {
-                var popupContent = 
-                    '<div>' +
-                        '<p>Pukul: ' + timeWIB + '</p>' +
-                        '<p>Alamat: ' + address + '</p>' +
-                        '<p>Jumlah Sapi terdeteksi: ' + field3 + '</p>' +
-                        '<button class="btn btn-primary" onclick="getRoute()">Dapatkan Rute</button>' +
-                    '</div>';
+            var marker = L.marker(latLng).addTo(map);
+            map.setView(latLng, map.getZoom());
 
-                var marker = L.marker(latLng).addTo(map).bindPopup(popupContent, {
-                    maxWidth: 'auto'
-                });
-                map.setView(latLng, map.getZoom());
-            })
-            .catch(error => {
-                console.error('Error fetching address:', error);
-            });
+            // Update information container below the map
+            updateInfoContainer(location);
         }
 
         // Function to get route from user's location to the herd location
@@ -206,5 +233,6 @@
         // Fetch data every 20 seconds (adjust the interval as needed)
         setInterval(fetchData, 20000);
     </script>
+  
 </body>
 </html>
