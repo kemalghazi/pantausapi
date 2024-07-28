@@ -17,19 +17,19 @@
         /* Custom CSS for the title */
         .page-title {
             text-align: center;
-            font-size: 2rem; /* Ukuran huruf yang lebih sesuai */
+            font-size: 2rem;
             margin-top: 20px;
-            padding: 10px 20px; /* Padding untuk meningkatkan keterbacaan */
-            background-color: #007bff; /* Warna latar belakang */
-            color: white; /* Warna teks */
-            border-radius: 10px; /* Bentuk sudut yang dibulatkan */
+            padding: 10px 20px;
+            background-color: #4CAF50; /* Earthy green background */
+            color: white; /* White text */
+            border-radius: 10px;
         }
 
         @media (max-width: 576px) {
-            #map { height: 300px; } /* Sesuaikan tinggi peta untuk layar yang lebih kecil */
+            #map { height: 300px; }
             .page-title {
-                font-size: 1.5rem; /* Ukuran huruf yang lebih kecil untuk judul */
-                padding: 5px 10px; /* Padding lebih sedikit untuk penyesuaian yang lebih baik pada layar yang lebih kecil */
+                font-size: 1.5rem;
+                padding: 5px 10px;
             }
         }
 
@@ -38,10 +38,20 @@
             bottom: 0;
             left: 0;
             width: 100%;
-            background-color: white;
+            background-color: #f8f9fa; /* Light background */
             padding: 10px;
             border-top: 1px solid #ddd;
             text-align: center;
+            color: #333; /* Dark text for better readability */
+        }
+
+        .btn-primary {
+            background-color: #FF5722; /* Vibrant orange button */
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background-color: #E64A19; /* Darker orange on hover */
         }
     </style>
 </head>
@@ -175,7 +185,14 @@
                 }
             });
 
-            var marker = L.marker(latLng).addTo(map);
+            var marker = L.marker(latLng, {icon: L.icon({
+                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png',
+                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34],
+                shadowSize: [41, 41]
+            })}).addTo(map);
             map.setView(latLng, map.getZoom());
 
             // Update information container below the map
@@ -212,7 +229,7 @@
                 }
                 routeLayer = L.geoJSON(route, {
                     style: {
-                        color: 'blue',
+                        color: 'orange', /* Color for the route */
                         weight: 4,
                         opacity: 0.7
                     }
